@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Produtos</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+    <h1 class="text-3xl font-bold mb-4">Sistema de Produtos</h1>
+    <h2 class="text-2xl font-semibold mb-4">Cálculo do Pão de Mel</h2>
+    <form id="productForm" class="mb-6 p-4 bg-white rounded shadow-md">
+        <input type="text" id="descricao" placeholder="Descrição" required class="border p-2 rounded w-full mb-2">
+        <input type="number" id="peso" placeholder="Peso (kg)" required step="0.01" class="border p-2 rounded w-full mb-2">
+        <input type="number" id="valor" placeholder="Valor (R$)" required step="0.01" class="border p-2 rounded w-full mb-2">
+        <input type="number" id="pesoUsadoPaoDeMel" placeholder="Peso Usado (g)" required step="0.01" class="border p-2 rounded w-full mb-2">
+        <input type="hidden" id="editIndex">
+        <button type="submit" class="bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Adicionar Produto</button>
+    </form>
+
+    <h2 class="text-2xl font-bold mb-4">Lista de Produtos</h2>
+    <ul id="productList" class="bg-white rounded shadow-md p-4 space-y-2"></ul>
+
+    <script>
+        class Produto {
+            constructor(descricao, peso, valor, pesoUsadoPaoDeMel) {
+                this.descricao = descricao;
+                this.peso = peso; // em kg
+                this.valor = valor; // em R$
+                this.pesoUsadoPaoDeMel = pesoUsadoPaoDeMel; // em g
+            }
+
+            getCalculaValorPorPaoDeMel() {
+                const valorPorKg = this.valor / this.peso; // valor por kg
+                const pesoUsadoKg = this.pesoUsadoPaoDeMel / 1000; // converter g para kg
+                return valorPorKg * pesoUsadoKg; // valor por pão de mel
+            }
+        }
+
+        const productForm = document.getElementById('productForm');
+        const productList = document.getElementById('productList');
+        let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+
+        function renderProducts() {
+            productList.innerHTML = '';
+            produtos.forEach((produto, index) => {
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-gray-50 p-4 rounded shadow";
+                li.textContent = `${produto.descricao} - Valor por pão de mel: R$ ${produto.getCalculaValorPorPaoDeMel().toFixed(2)}`;
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Editar';
+                editButton.className = "bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600 ml-2";
+                editButton.onclick = () => editProduct(index);
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Deletar';
+                deleteButton.className = "bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 ml-2";
+                deleteButton.onclick = () => {
+                    produtos.splice(index, 1);
+                    saveProducts();
+                    renderProducts();
+                };
+
+                li.appendChild(editButton);
+                li.appendChild(deleteButton);
+                productList.appendChild(li);
+            });
+        }
+
+        function saveProducts() {
+            localStorage.setItem('produtos', JSON.stringify(produtos));
+        }
+
+        productForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const descricao = document.getElementById('descricao').value;
+            const peso = parseFloat(document.getElementById('peso').value);
+            const valor = parseFloat(document.getElementById('valor').value);
+            const pesoUsadoPaoDeMel = parseFloat(document.getElementById('pesoUsadoPaoDeMel').value);
+            const editIndex = document.getElementById('editIndex').value;
+
+            if (editIndex) {
+                // Atualiza produto existente
+                produtos[editIndex] = new Produto(descricao, peso, valor, pesoUsadoPaoDeMel);
+                document.getElementById('editIndex').value = '';
+            } else {
+                // Adiciona novo produto
+                const produto = new Produto(descricao, peso, valor, pesoUsadoPaoDeMel);
+                produtos.push(produto);
+            }
+
+            saveProducts();
+            renderProducts();
+            productForm.reset();
+        });
+
+        function editProduct(index) {
+            const produto = produtos[index];
+            document.getElementById('descricao').value = produto.descricao;
+            document.getElementById('peso').value = produto.peso;
+            document.getElementById('valor').value = produto.valor;
+            document.getElementById('pesoUsadoPaoDeMel').value = produto.pesoUsadoPaoDeMel;
+            document.getElementById('editIndex').value = index;
+        }
+
+        // Renderiza os produtos ao carregar a página
+        renderProducts();
+    </script>
+</body>
+</html>
