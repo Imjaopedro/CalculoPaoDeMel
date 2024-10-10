@@ -40,6 +40,7 @@
         const productForm = document.getElementById('productForm');
         const productList = document.getElementById('productList');
         let produtos = JSON.parse(localStorage.getItem('produtos')) || [];
+        produtos = produtos.map(produto => new Produto(produto.descricao, produto.peso, produto.valor, produto.pesoUsadoPaoDeMel));
 
         function renderProducts() {
             productList.innerHTML = '';
